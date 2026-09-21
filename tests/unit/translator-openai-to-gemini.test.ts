@@ -304,7 +304,7 @@ test("OpenAI -> Gemini request maps messages, merged system instructions, tools 
   assert.equal(responseSchema.properties.answer.type, "string");
   assert.deepEqual(responseSchema.properties.answer.enum, ["ok"]);
   const parameters = getFunctionDeclarationParameters(
-    (result as any).tools[0].functionDeclarations[0].parameters
+    (result as unknown).tools[0].functionDeclarations[0].parameters
   );
   assert.deepEqual(parameters, {
     type: "object",
@@ -329,7 +329,7 @@ test("OpenAI -> Gemini request preserves custom safety settings and handles syst
   );
 
   assert.deepEqual(result.safetySettings, customSafety);
-  assert.equal((result as any).systemInstruction, undefined);
+  assert.equal((result as unknown).systemInstruction, undefined);
   assert.equal(result.contents.length, 1);
   assert.equal(result.contents[0].role, "user");
   assert.deepEqual(result.contents[0].parts, [{ text: "Only rules" }]);
@@ -371,10 +371,10 @@ test("OpenAI -> Cloud Code Gemini adds thinking config and normalizes namespaced
     false
   );
 
-  assert.equal((result as any).generationConfig.thinkingConfig.includeThoughts, true);
-  assert.ok((result as any).generationConfig.thinkingConfig.thinkingBudget > 0);
-  assert.equal((result as any).tools[0].functionDeclarations[0].name, "weather");
-  assert.equal((result as any)._toolNameMap.get("weather"), "ns:weather");
+  assert.equal((result as unknown).generationConfig.thinkingConfig.includeThoughts, true);
+  assert.ok((result as unknown).generationConfig.thinkingConfig.thinkingBudget > 0);
+  assert.equal((result as unknown).tools[0].functionDeclarations[0].name, "weather");
+  assert.equal((result as unknown)._toolNameMap.get("weather"), "ns:weather");
 
   const modelTurn = result.contents.find((content) => content.role === "model");
   assert.ok(modelTurn, "expected a model turn");
@@ -434,11 +434,11 @@ test("OpenAI -> Gemini request sanitizes long MCP tool names and strips unsuppor
     false
   );
 
-  const sanitizedToolName = (result as any).tools[0].functionDeclarations[0].name;
+  const sanitizedToolName = (result as unknown).tools[0].functionDeclarations[0].name;
   assert.ok(longToolName.length > 64);
   assert.equal(sanitizedToolName.length, 64);
   assert.match(sanitizedToolName, /_[a-f0-9]{8}$/);
-  assert.equal((result as any)._toolNameMap.get(sanitizedToolName), longToolName);
+  assert.equal((result as unknown)._toolNameMap.get(sanitizedToolName), longToolName);
 
   const modelTurn = result.contents.find((content) => content.role === "model");
   assert.ok(modelTurn, "expected a model turn");
@@ -450,7 +450,7 @@ test("OpenAI -> Gemini request sanitizes long MCP tool names and strips unsuppor
   assert.ok(toolTurn, "expected a tool response turn");
   assert.equal(getFunctionResponse(toolTurn.parts[0]).name, sanitizedToolName);
   const longToolParameters = getFunctionDeclarationParameters(
-    (result as any).tools[0].functionDeclarations[0].parameters
+    (result as unknown).tools[0].functionDeclarations[0].parameters
   ) as UnknownRecord & {
     properties?: {
       paths?: {
@@ -483,7 +483,7 @@ test("OpenAI -> Gemini request gives googleSearch precedence over function tools
     false
   );
 
-  assert.deepEqual((result as any).tools, [{ googleSearch: {} }]);
+  assert.deepEqual((result as unknown).tools, [{ googleSearch: {} }]);
 });
 
 test("OpenAI -> Antigravity keeps googleSearch without function calling config", () => {
@@ -503,10 +503,10 @@ test("OpenAI -> Antigravity keeps googleSearch without function calling config",
       ],
     },
     false,
-    { projectId: "proj-search" } as any
+    { projectId: "proj-search" } as unknown
   );
 
-  assert.deepEqual((result as any).request?.tools, [{ googleSearch: {} }]);
+  assert.deepEqual((result as unknown).request?.tools, [{ googleSearch: {} }]);
   assert.equal(result.request.toolConfig, undefined);
 });
 
@@ -514,7 +514,7 @@ test("OpenAI -> Gemini helper IDs and JSON parsing stay in the expected format",
   assert.match(generateRequestId(), /^agent-/);
   assert.match(generateSessionId(), /^-\d+$/);
   assert.deepEqual(tryParseJSON('{"ok":true}'), { ok: true });
-  assert.equal(tryParseJSON("not-json"), null as any);
+  assert.equal(tryParseJSON("not-json"), null as unknown);
 });
 
 test("OpenAI -> Cloud Code Gemini emits native functionResponse result", () => {
@@ -541,7 +541,7 @@ test("OpenAI -> Cloud Code Gemini emits native functionResponse result", () => {
       ],
     },
     true
-  ) as any;
+  ) as unknown;
 
   const toolTurn = request.contents.find(
     (content) => content.role === "user" && content.parts.some((part) => part.functionResponse)
@@ -571,7 +571,7 @@ test("OpenAI -> Antigravity wraps Gemini requests in a Cloud Code envelope", () 
       reasoning_effort: "medium",
     },
     false,
-    { projectId: "proj-1" } as any
+    { projectId: "proj-1" } as unknown
   );
 
   assert.equal(result.project, "proj-1");
@@ -597,7 +597,7 @@ test("OpenAI -> Antigravity wraps Gemini requests in a Cloud Code envelope", () 
   assert.equal(result.request.generationConfig.topK, 40);
   assert.equal(result.request.generationConfig.topP, 1.0);
   assert.equal(
-    (result as any).request?.systemInstruction.parts[0].text,
+    (result as unknown).request?.systemInstruction.parts[0].text,
     ANTIGRAVITY_DEFAULT_SYSTEM
   );
   assert.deepEqual(result.request.toolConfig, {
@@ -638,7 +638,7 @@ test("OpenAI -> Antigravity Gemini omits signature-less historical tool calls an
       ],
     },
     false,
-    { projectId: "proj-antigravity-gemini" } as any
+    { projectId: "proj-antigravity-gemini" } as unknown
   );
 
   const modelTurn = result.request.contents.find((content) => content.role === "model");
@@ -719,7 +719,7 @@ test("OpenAI -> Antigravity preserves multiple signature-less historical tool re
       ],
     },
     false,
-    { projectId: "proj-antigravity-gemini" } as any
+    { projectId: "proj-antigravity-gemini" } as unknown
   );
 
   // With skip_thought_signature_validator bypass: native functionCall + functionResponse expected
@@ -765,7 +765,7 @@ test("OpenAI -> Antigravity preserves signed Gemini tool calls in native form", 
       ],
     },
     false,
-    { projectId: "proj-antigravity-gemini", _signatureNamespace: ns } as any
+    { projectId: "proj-antigravity-gemini", _signatureNamespace: ns } as unknown
   );
 
   const text = JSON.stringify(result.request.contents);
@@ -809,7 +809,7 @@ test("OpenAI -> Antigravity escapes signature-less tool response context content
       ],
     },
     false,
-    { projectId: "proj-antigravity-gemini" } as any
+    { projectId: "proj-antigravity-gemini" } as unknown
   );
 
   // With skip_thought_signature_validator bypass: native functionResponse is emitted
@@ -858,7 +858,7 @@ test("OpenAI -> Antigravity maps Claude-family models to Gemini-compatible schem
       ],
     },
     false,
-    { projectId: "proj-claude" } as any
+    { projectId: "proj-claude" } as unknown
   );
 
   assert.equal(result.project, "proj-claude");
@@ -874,11 +874,11 @@ test("OpenAI -> Antigravity maps Claude-family models to Gemini-compatible schem
   // #9030 — Client system content moved to first user message to avoid upstream 429s
   assert.equal(result.request.contents[0].parts[0].text, "Project rules");
   assert.equal(result.request.contents[0].parts[1].text, "Read a file");
-  assert.equal((result as any).request?.generationConfig.maxOutputTokens, undefined);
-  assert.equal((result as any).request?.messages, undefined);
-  assert.equal((result as any).request?.system, undefined);
-  assert.equal((result as any).request?.max_tokens, undefined);
-  assert.equal((result as any).request?.stream, undefined);
+  assert.equal((result as unknown).request?.generationConfig.maxOutputTokens, undefined);
+  assert.equal((result as unknown).request?.messages, undefined);
+  assert.equal((result as unknown).request?.system, undefined);
+  assert.equal((result as unknown).request?.max_tokens, undefined);
+  assert.equal((result as unknown).request?.stream, undefined);
 
   const modelTurn = result.request.contents.find(
     (content) => content.role === "model" && content.parts.some((part) => part.functionCall)
@@ -894,7 +894,7 @@ test("OpenAI -> Antigravity maps Claude-family models to Gemini-compatible schem
   assert.ok(toolTurn, "expected a Gemini-compatible tool response turn");
   const toolResultBlock = getFunctionResponse(toolTurn.parts[0]);
   assert.equal(toolResultBlock.id, "call_1");
-  assert.equal((result as any).request?.tools[0].functionDeclarations[0].name, "read_file");
+  assert.equal((result as unknown).request?.tools[0].functionDeclarations[0].name, "read_file");
 });
 
 test("OpenAI -> Antigravity Claude path sanitizes tool names for Gemini schema", () => {
@@ -936,10 +936,10 @@ test("OpenAI -> Antigravity Claude path sanitizes tool names for Gemini schema",
       ],
     },
     false,
-    { projectId: "proj-claude-map" } as any
+    { projectId: "proj-claude-map" } as unknown
   );
 
-  const sanitizedToolName = (result as any).request?.tools[0].functionDeclarations[0].name;
+  const sanitizedToolName = (result as unknown).request?.tools[0].functionDeclarations[0].name;
   assert.notEqual(sanitizedToolName, longToolName);
   assert.match(
     sanitizedToolName,
@@ -976,15 +976,15 @@ test("OpenAI -> Antigravity Claude path applies output cap and strips thinkingCo
       reasoning_effort: "high",
     },
     false,
-    { projectId: "proj-claude-thinking" } as any
+    { projectId: "proj-claude-thinking" } as unknown
   );
 
-  assert.equal((result as any).request?.generationConfig.maxOutputTokens, 32769);
+  assert.equal((result as unknown).request?.generationConfig.maxOutputTokens, 32769);
   // thinkingConfig must be stripped for Claude — Cloud Code Claude endpoint
   // does not understand the Gemini-shape thinkingConfig field.
-  assert.equal((result as any).request?.generationConfig.thinkingConfig, undefined);
-  assert.equal((result as any).request?.max_tokens, undefined);
-  assert.equal((result as any).request?.thinking, undefined);
+  assert.equal((result as unknown).request?.generationConfig.thinkingConfig, undefined);
+  assert.equal((result as unknown).request?.max_tokens, undefined);
+  assert.equal((result as unknown).request?.thinking, undefined);
 });
 
 test("OpenAI -> Antigravity Claude path preserves lower requested output and strips thinkingConfig", () => {
@@ -996,13 +996,13 @@ test("OpenAI -> Antigravity Claude path preserves lower requested output and str
       reasoning_effort: "high",
     },
     false,
-    { projectId: "proj-claude-short" } as any
+    { projectId: "proj-claude-short" } as unknown
   );
 
-  assert.equal((result as any).request?.generationConfig.maxOutputTokens, 32769);
-  assert.equal((result as any).request?.generationConfig.thinkingConfig, undefined);
-  assert.equal((result as any).request?.max_tokens, undefined);
-  assert.equal((result as any).request?.thinking, undefined);
+  assert.equal((result as unknown).request?.generationConfig.maxOutputTokens, 32769);
+  assert.equal((result as unknown).request?.generationConfig.thinkingConfig, undefined);
+  assert.equal((result as unknown).request?.max_tokens, undefined);
+  assert.equal((result as unknown).request?.thinking, undefined);
 });
 
 test("OpenAI -> Antigravity Gemini path preserves thinkingConfig (only Claude is stripped)", () => {
@@ -1017,17 +1017,20 @@ test("OpenAI -> Antigravity Gemini path preserves thinkingConfig (only Claude is
       reasoning_effort: "high",
     },
     false,
-    { projectId: "proj-gemini-thinking" } as any
+    { projectId: "proj-gemini-thinking" } as unknown
   );
 
   // For Gemini, thinkingConfig must remain in place because the Cloud Code
   // Gemini endpoint understands and uses it.
   assert.ok(
-    (result as any).request?.generationConfig.thinkingConfig,
+    (result as unknown).request?.generationConfig.thinkingConfig,
     "thinkingConfig must be preserved for Gemini models on Antigravity"
   );
-  assert.equal((result as any).request?.generationConfig.thinkingConfig.thinkingBudget > 0, true);
-  assert.equal((result as any).request?.generationConfig.thinkingConfig.includeThoughts, true);
+  assert.equal(
+    (result as unknown).request?.generationConfig.thinkingConfig.thinkingBudget > 0,
+    true
+  );
+  assert.equal((result as unknown).request?.generationConfig.thinkingConfig.includeThoughts, true);
 });
 
 test("OpenAI -> Antigravity Gemini thinking models omit maxOutputTokens when max_tokens is undefined", () => {
@@ -1060,7 +1063,7 @@ test("openaiToAntigravityRequest falls back to providerSpecificData.projectId (#
     "gemini-3.1-flash-lite",
     { messages: [{ role: "user", content: "Hello" }] },
     false,
-    { providerSpecificData: { projectId: "proj-from-psd" } } as any
+    { providerSpecificData: { projectId: "proj-from-psd" } } as unknown
   );
   assert.equal(result.project, "proj-from-psd");
 });
@@ -1070,7 +1073,7 @@ test("openaiToAntigravityRequest prefers top-level projectId over providerSpecif
     "gemini-3.1-flash-lite",
     { messages: [{ role: "user", content: "Hello" }] },
     false,
-    { projectId: "proj-top", providerSpecificData: { projectId: "proj-psd" } } as any
+    { projectId: "proj-top", providerSpecificData: { projectId: "proj-psd" } } as unknown
   );
   assert.equal(result.project, "proj-top");
 });
@@ -1081,19 +1084,19 @@ test("convertOpenAIContentToParts handles input_file file_data (#2515)", () => {
   const parts = convertOpenAIContentToParts([
     { type: "input_file", file_data: "JVBERi0xLjcKJ", filename: "doc.pdf" },
   ]);
-  const inline = parts.find((p) => (p as any).inlineData);
+  const inline = parts.find((p) => (p as unknown).inlineData);
   assert.ok(inline, "input_file with file_data must produce an inlineData part");
-  assert.equal((inline as any).inlineData.data, "JVBERi0xLjcKJ");
+  assert.equal((inline as unknown).inlineData.data, "JVBERi0xLjcKJ");
 });
 
 test("convertOpenAIContentToParts handles input_file file_url data URI (#2515)", () => {
   const parts = convertOpenAIContentToParts([
     { type: "input_file", file_url: "data:application/pdf;base64,QUJD", filename: "d.pdf" },
   ]);
-  const inline = parts.find((p) => (p as any).inlineData);
+  const inline = parts.find((p) => (p as unknown).inlineData);
   assert.ok(inline, "input_file with file_url data URI must produce an inlineData part");
-  assert.equal((inline as any).inlineData.data, "QUJD");
-  assert.equal((inline as any).inlineData.mimeType, "application/pdf");
+  assert.equal((inline as unknown).inlineData.data, "QUJD");
+  assert.equal((inline as unknown).inlineData.mimeType, "application/pdf");
 });
 
 test("convertOpenAIContentToParts handles rec.image with nested {url} as base64 data URI (#2807)", () => {
@@ -1101,13 +1104,13 @@ test("convertOpenAIContentToParts handles rec.image with nested {url} as base64 
     { type: "text", text: "What's this?" },
     { type: "image", image: { url: "data:image/png;base64,iVBORw0KGgo=" } },
   ]);
-  const inline = parts.find((p) => (p as any).inlineData);
+  const inline = parts.find((p) => (p as unknown).inlineData);
   assert.ok(
     inline,
     "rec.image with nested {url} must produce an inlineData part (was previously silently dropped)"
   );
-  assert.equal((inline as any).inlineData.data, "iVBORw0KGgo=");
-  assert.equal((inline as any).inlineData.mimeType, "image/png");
+  assert.equal((inline as unknown).inlineData.data, "iVBORw0KGgo=");
+  assert.equal((inline as unknown).inlineData.mimeType, "image/png");
 });
 
 test("convertOpenAIContentToParts passes remote http(s) image_url URLs through as fileData (#4373; was warn-and-drop #2807)", () => {
@@ -1118,7 +1121,7 @@ test("convertOpenAIContentToParts passes remote http(s) image_url URLs through a
   // Part schema accepts `fileData: { fileUri }` for HTTP/HTTPS sources — so the URL
   // is passed through (the model fetches it) instead of being dropped (#4373).
   assert.equal(
-    parts.find((p) => (p as any).inlineData),
+    parts.find((p) => (p as unknown).inlineData),
     undefined,
     "remote URL is not base64-inlined (sync function)"
   );
@@ -1135,7 +1138,7 @@ test("convertOpenAIContentToParts passes remote rec.image http(s) URLs through a
     { type: "image", image: { url: "https://example.com/remote.png" } },
   ]);
   assert.equal(
-    parts.find((p) => (p as any).inlineData),
+    parts.find((p) => (p as unknown).inlineData),
     undefined,
     "rec.image remote URL is not base64-inlined (sync function cannot fetch)"
   );
@@ -1153,7 +1156,7 @@ test("openaiToGeminiRequest re-attaches cached thoughtSignature for FORMATS.GEMI
   const toolId = "call_2504_abc";
   storeGeminiThoughtSignature(buildGeminiThoughtSignatureKey(ns, toolId), "SIG_2504_XYZ");
 
-  const result: any = openaiToGeminiRequest(
+  const result: unknown = openaiToGeminiRequest(
     "gemini-2.5-pro-preview",
     {
       messages: [
@@ -1187,11 +1190,11 @@ test("OpenAI -> Gemini request maps reasoning_effort to thinkingConfig", () => {
     false
   );
 
-  assert.ok((result as any).generationConfig.thinkingConfig, "expected thinkingConfig");
-  assert.equal((result as any).generationConfig.thinkingConfig.includeThoughts, true);
+  assert.ok((result as unknown).generationConfig.thinkingConfig, "expected thinkingConfig");
+  assert.equal((result as unknown).generationConfig.thinkingConfig.includeThoughts, true);
   // gemini-2.0-flash-thinking carries no registry cap, so the raw 32768 base is
   // passed through unchanged (capThinkingBudget no-ops without a thinkingBudgetCap).
-  assert.equal((result as any).generationConfig.thinkingConfig.thinkingBudget, 32768);
+  assert.equal((result as unknown).generationConfig.thinkingConfig.thinkingBudget, 32768);
 });
 
 // Regression for #3842: reasoning_effort=high must not exceed a Gemini model's real
@@ -1206,7 +1209,7 @@ test("OpenAI -> Gemini reasoning_effort=high stays within gemini-2.5-flash cap (
       reasoning_effort: "high",
     },
     false
-  ) as any;
+  ) as unknown;
   const budget = result.generationConfig.thinkingConfig.thinkingBudget;
   assert.ok(budget <= 24576, `expected <= 24576 (real cap), got ${budget}`);
   assert.equal(budget, 24576);
@@ -1222,9 +1225,9 @@ test("OpenAI -> Gemini request maps google_search tool", () => {
     false
   );
 
-  assert.ok(Array.isArray((result as any).tools), "expected tools array");
+  assert.ok(Array.isArray((result as unknown).tools), "expected tools array");
   assert.ok(
-    (result as any).tools.some((t: any) => t.googleSearch),
+    (result as unknown).tools.some((t: unknown) => t.googleSearch),
     "expected googleSearch tool"
   );
 });
@@ -1398,7 +1401,7 @@ test("registered OPENAI->GEMINI translator uses context-mode for signature-less 
       ],
     },
     false
-  ) as any;
+  ) as unknown;
 
   const body = JSON.stringify(result);
   // Context mode: signature-less functionCall must NOT appear as a native part.
@@ -1472,7 +1475,7 @@ test("registered OPENAI->GEMINI translator falls back to context mode for signat
     },
     false,
     { _signatureNamespace: "conn-3688-test" }
-  ) as any;
+  ) as unknown;
 
   const body = JSON.stringify(result);
 
@@ -1480,7 +1483,7 @@ test("registered OPENAI->GEMINI translator falls back to context mode for signat
   // A functionCall without a thoughtSignature is the exact payload that triggers
   // Gemini's HTTP 400 "Function call is missing a thought_signature".
   const modelTurn = result.contents.find(
-    (c: any) => c.role === "model" && c.parts?.some((p: any) => p.functionCall)
+    (c: unknown) => c.role === "model" && c.parts?.some((p: unknown) => p.functionCall)
   );
   assert.equal(
     modelTurn,
@@ -1533,7 +1536,7 @@ test("registered OPENAI->GEMINI translator keeps native functionCall+thoughtSign
     },
     false,
     { _signatureNamespace: ns }
-  ) as any;
+  ) as unknown;
 
   const body = JSON.stringify(result);
 
@@ -1568,7 +1571,7 @@ test("OpenAI -> Gemini thinking.budget_tokens is capped by model thinkingBudgetC
       thinking: { type: "enabled", budget_tokens: 50000 },
     },
     false
-  ) as any;
+  ) as unknown;
   assert.equal(result.generationConfig.thinkingConfig.thinkingBudget, 24576);
   assert.equal(result.generationConfig.thinkingConfig.includeThoughts, true);
 });
@@ -1581,7 +1584,7 @@ test("OpenAI -> Gemini thinking.budget_tokens=0 disables thinking after cap", ()
       thinking: { type: "enabled", budget_tokens: 0 },
     },
     false
-  ) as any;
+  ) as unknown;
   assert.equal(result.generationConfig.thinkingConfig.thinkingBudget, 0);
   assert.equal(result.generationConfig.thinkingConfig.includeThoughts, false);
 });
@@ -1594,7 +1597,7 @@ test("OpenAI -> Gemini thinking.budget_tokens below cap passes through", () => {
       thinking: { type: "enabled", budget_tokens: 8192 },
     },
     false
-  ) as any;
+  ) as unknown;
   assert.equal(result.generationConfig.thinkingConfig.thinkingBudget, 8192);
   assert.equal(result.generationConfig.thinkingConfig.includeThoughts, true);
 });
@@ -1609,7 +1612,7 @@ test("OpenAI -> Gemini skips thinkingConfig for model with thinkingBudgetCap=0",
       thinking: { type: "enabled", budget_tokens: 5000 },
     },
     false
-  ) as any;
+  ) as unknown;
   assert.equal(
     result.generationConfig.thinkingConfig,
     undefined,
@@ -1630,7 +1633,7 @@ test("OpenAI -> Gemini clamps reasoning_effort thinkingConfig to 0 for model wit
       reasoning_effort: "high",
     },
     false
-  ) as any;
+  ) as unknown;
   assert.equal(result.generationConfig.thinkingConfig.thinkingBudget, 0);
   assert.equal(result.generationConfig.thinkingConfig.includeThoughts, false);
 });
@@ -1644,7 +1647,7 @@ test("OpenAI -> Gemini allows thinkingConfig for unknown model (no spec)", () =>
       thinking: { type: "enabled", budget_tokens: 5000 },
     },
     false
-  ) as any;
+  ) as unknown;
   assert.equal(result.generationConfig.thinkingConfig.thinkingBudget, 5000);
   assert.equal(result.generationConfig.thinkingConfig.includeThoughts, true);
 });
@@ -1692,23 +1695,23 @@ test("OpenAI -> Gemini pairs tool calls and responses per turn without cross-tur
       ],
     },
     false
-  ) as any;
+  ) as unknown;
 
   // Verify Turn 1 functionCall and functionResponse
-  const turn1Model = result.contents.find((c: any) =>
-    c.parts?.some((p: any) => p.functionCall?.name === "read_file")
+  const turn1Model = result.contents.find((c: unknown) =>
+    c.parts?.some((p: unknown) => p.functionCall?.name === "read_file")
   );
   assert.ok(turn1Model, "Turn 1 model functionCall must be read_file");
 
-  const turn1User = result.contents.find((c: any) =>
+  const turn1User = result.contents.find((c: unknown) =>
     c.parts?.some(
-      (p: any) =>
+      (p: unknown) =>
         p.functionResponse?.response?.result === "file content from turn 1" ||
         p.functionResponse?.name === "read_file"
     )
   );
   assert.ok(turn1User, "Turn 1 user functionResponse must exist");
-  const turn1Resp = turn1User.parts.find((p: any) => p.functionResponse);
+  const turn1Resp = turn1User.parts.find((p: unknown) => p.functionResponse);
   assert.equal(
     turn1Resp.functionResponse.name,
     "read_file",
@@ -1721,15 +1724,15 @@ test("OpenAI -> Gemini pairs tool calls and responses per turn without cross-tur
   );
 
   // Verify Turn 2 functionCall and functionResponse
-  const turn2User = result.contents.find((c: any) =>
+  const turn2User = result.contents.find((c: unknown) =>
     c.parts?.some(
-      (p: any) =>
+      (p: unknown) =>
         p.functionResponse?.response?.result === "terminal output from turn 2" ||
         p.functionResponse?.name === "run_terminal_command"
     )
   );
   assert.ok(turn2User, "Turn 2 user functionResponse must exist");
-  const turn2Resp = turn2User.parts.find((p: any) => p.functionResponse);
+  const turn2Resp = turn2User.parts.find((p: unknown) => p.functionResponse);
   assert.equal(
     turn2Resp.functionResponse.name,
     "run_terminal_command",
@@ -1787,11 +1790,11 @@ test("OpenAI -> Gemini pairs tool calls and responses in context mode without ID
     false,
     null,
     { signaturelessToolCallMode: "context" }
-  ) as any;
+  ) as unknown;
 
   // In context mode without thought signatures, tool responses are emitted as context text
-  const textParts = result.contents.flatMap((c: any) =>
-    (c.parts || []).filter((p: any) => typeof p.text === "string").map((p: any) => p.text)
+  const textParts = result.contents.flatMap((c: unknown) =>
+    (c.parts || []).filter((p: unknown) => typeof p.text === "string").map((p: unknown) => p.text)
   );
   assert.ok(
     textParts.some(
