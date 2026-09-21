@@ -13,8 +13,8 @@ import { ANTIGRAVITY_PUBLIC_MODELS } from "../../open-sse/config/antigravityMode
 
 const serial = { concurrency: false };
 
-test("#12724 — shared base has exactly 10 models", serial, () => {
-  assert.equal(ANTIGRAVITY_SHARED_MODELS.length, 10);
+test("#12724 — shared base keeps the expected 13-model catalog", serial, () => {
+  assert.equal(ANTIGRAVITY_SHARED_MODELS.length, 13);
 });
 
 test("#12724 — agy catalog equals shared base (empty deltas)", serial, () => {
@@ -33,7 +33,7 @@ test("#12724 — buildSurfaceCatalog remove delta works", serial, () => {
   const subset = buildSurfaceCatalog(ANTIGRAVITY_SHARED_MODELS, {
     remove: ["gemini-3.7-flash-high"],
   });
-  assert.equal(subset.length, 9);
+  assert.equal(subset.length, ANTIGRAVITY_SHARED_MODELS.length - 1);
   assert.ok(!subset.some((m) => m.id === "gemini-3.7-flash-high"));
 });
 
@@ -41,7 +41,7 @@ test("#12724 — buildSurfaceCatalog add delta works", serial, () => {
   const extended = buildSurfaceCatalog(ANTIGRAVITY_SHARED_MODELS, {
     add: [{ id: "custom-model-v1", name: "Custom Model" }],
   });
-  assert.equal(extended.length, 11);
+  assert.equal(extended.length, ANTIGRAVITY_SHARED_MODELS.length + 1);
   assert.ok(extended.some((m) => m.id === "custom-model-v1"));
 });
 
@@ -50,7 +50,7 @@ test("#12724 — buildSurfaceCatalog with both add and remove", serial, () => {
     add: [{ id: "custom-model-v1", name: "Custom Model" }],
     remove: ["gemini-3.7-flash-high", "gemini-3.7-flash-medium"],
   });
-  assert.equal(mixed.length, 9); // 10 - 2 + 1
+  assert.equal(mixed.length, ANTIGRAVITY_SHARED_MODELS.length - 1); // base - 2 + 1
   assert.ok(!mixed.some((m) => m.id === "gemini-3.7-flash-high"));
   assert.ok(mixed.some((m) => m.id === "custom-model-v1"));
 });

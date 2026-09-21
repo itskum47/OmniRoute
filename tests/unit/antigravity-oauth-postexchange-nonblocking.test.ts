@@ -43,12 +43,19 @@ function jsonRes(body: unknown, status = 200): Response {
 function stalledFetch(init?: { signal?: AbortSignal }): Promise<Response> {
   return new Promise((_resolve, reject) => {
     const abortErr = () => new DOMException("The operation was aborted.", "AbortError");
+    // Keep one ref'd handle alive until abort/reject so node:test does not cancel
+    // the subtest early when AbortSignal.timeout uses an unref'd timer.
+    const keepAlive = setTimeout(() => {}, 60_000);
+    const fail = () => {
+      clearTimeout(keepAlive);
+      reject(abortErr());
+    };
     const signal = init?.signal;
     if (signal?.aborted) {
-      reject(abortErr());
+      fail();
       return;
     }
-    signal?.addEventListener("abort", () => reject(abortErr()));
+    signal?.addEventListener("abort", fail, { once: true });
   });
 }
 

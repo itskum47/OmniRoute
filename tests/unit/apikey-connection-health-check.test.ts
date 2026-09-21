@@ -140,13 +140,12 @@ test("API-key-only antigravity connection is NOT marked expired by health check"
   );
 });
 
-test("connection with both apiKey and refreshToken: refresh path is tried", async () => {
+test("connection with both apiKey and refreshToken stays active when refresh fails transiently", async () => {
   await resetStorage();
 
-  // Edge case: connection has both an API key and a refresh token
-  // The health check tries the refresh token path first.
-  // With a stale/invalid refresh token, the connection gets marked expired
-  // even though an API key exists — the refresh path takes precedence.
+  // Edge case: connection has both an API key and a refresh token.
+  // Refresh can fail transiently; when an API key exists the row must remain
+  // active instead of being forced into terminal expired state.
   const conn = await providersDb.createProviderConnection({
     provider: "gemini",
     name: "gemini-dual-auth",
@@ -162,13 +161,11 @@ test("connection with both apiKey and refreshToken: refresh path is tried", asyn
 
   const updated = await providersDb.getProviderConnectionById(conn.id);
 
-  // The refresh token path is tried first. Since the refresh token is invalid,
-  // the connection gets marked expired. This is expected — the operator should
-  // either remove the stale refresh token or re-authenticate.
+  // Refresh path is attempted, but the row remains usable via API key.
   assert.equal(
     updated?.testStatus,
-    "expired",
-    "dual-auth connection with stale refresh token should be expired (refresh path takes precedence)"
+    "active",
+    "dual-auth connection should stay active when refresh attempts fail transiently"
   );
 });
 
